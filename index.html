@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>스테이블코인 발행량</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/recharts@2.10.4/umd/Recharts.js"></script>
+  <style>
+    body { background-color: #000; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  
+  <script type="text/babel">
+    const { useState, useEffect, useCallback } = React;
+    const { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } = Recharts;
+
+    // Brand colors for major stablecoins
+    const STABLECOIN_COLORS = {
+      'USDT': '#26A17B',
+      'USDC': '#2775CA',
+      'DAI': '#F5AC37',
+      'FDUSD': '#5BC0EB',
+      'TUSD': '#1A237E',
+      'USDD': '#8B5CF6',
+      'FRAX': '#DC2626',
+      'LUSD': '#3B82F6',
+      'USDP': '#10B981',
+      'GUSD': '#00DCFA',
+      'PYUSD': '#0066CC',
+      'USDe': '#14B8A6',
+      'USDS': '#F59E0B',
+      'BUSD': '#F0B90B',
+      'crvUSD': '#FF6B6B',
+      'GHO': '#8B5CF6',
+      '기타': '#6B7280',
+    };
+
+    const FALLBACK_COLORS = ['#EC4899', '#8B5CF6', '#06B6D4', '#84CC16', '#F97316', '#EF4444', '#A855F7', '#22D3EE', '#FACC15', '#FB7185'];
+
+    const getStablecoinColor = (symbol, index) => {
+      return STABLECOIN_COLORS[symbol] || FALLBACK_COLORS[index % FALLBACK_COLORS.length];
+    };
+
+    function StablecoinChart() {
+      const [historicalData, setHistoricalData] = useState([]);
+      const [pieData, setPieData] = useState([]);
+      const [topStablecoins, setTopStablecoins] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState(null);
+      const [activeTab, setActiveTab] = useState('bar');
+      const [timeRange, setTimeRange] = useState('ALL');
+      const [hiddenCoins, setHiddenCoins] = useState(new Set());
+
+      useEffect(() => {
+        const fetchData = async () => {
+          try {
+            setLoading(true);
+
+            const stableRes = await fetch('https://stablecoins.llama.fi/stablecoins?includePrices=true');
+            const stableData = await stableRes.json();
+
+            const sorted = stableData.peggedAssets
+              .filter(s => s.circulating?.peggedUSD > 0)
+              .sort((a, b) => (b.circulating?.peggedUSD || 0) - (a.circulating?.peggedUSD || 0));
+
+            const top10 = sorted.slice(0, 10);
+            const top10Symbols = top10.map(s => s.symbol);
+            
+            setTopStablecoins(top10Symbols);
+
+            const othersTotal = sorted.slice(10).reduce((sum, s) => sum + (s.circulating?.peggedUSD || 0), 0);
+
+            const pieChartData = [
+              ...top10.map(s => ({
+                name: s.symbol,
+                value: s.circulating?.peggedUSD || 0,
+                fullName: s.name
+              })),
+              { name: '기타', value: othersTotal, fullName: '기타 스테이블코인' }
+            ];
+            setPieData(pieChartData);
+
+            const historicalPromises = top10.map(s =>
+              fetch(`https://stablecoins.llama.fi/stablecoin/${s.id}`)
+                .then(res => res.json())
+                .then(data => ({ symbol: s.symbol, data: data.tokens || [] }))
+            );
+
+            const totalHistRes = await fetch('https://stablecoins.llama.fi/stablecoincharts/all');
+            const totalHistData = await totalHistRes.json();
+
+            const historicalResults = await Promise.all(historicalPromises);
+
+            const dateMap = new Map();
+
+            historicalResults.forEach(({ symbol, data }) => {
+              data.forEach(item => {
+                const date = item.date;
+                const value = item.circulating?.peggedUSD || 0;
+                
+                if (!dateMap.has(date)) {
+                  dateMap.set(date, { date });
+                }
+                dateMap.get(date)[symbol] = value;
+              });
+            });
+
+            totalHistData.forEach(item => {
+              const date = item.date;
+              const total = item.totalCirculating?.peggedUSD || 0;
+              
+              if (dateMap.has(date)) {
+                const existing = dateMap.get(date);
+                const top10Sum = top10Symbols.reduce((sum, sym) => sum + (existing[sym] || 0), 0);
+                existing['기타'] = Math.max(0, total - top10Sum);
+                existing.total = total;
+              }
+            });
+
+            let processedData = Array.from(dateMap.values())
+              .filter(d => d.total > 0)
+              .sort((a, b) => a.date - b.date);
+
+            const monthlyMap = new Map();
+            
+            processedData.forEach(item => {
+              const dateObj = new Date(item.date * 1000);
+              const monthKey = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
+              const monthLabel = dateObj.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+              
+              monthlyMap.set(monthKey, {
+                ...item,
+                monthLabel,
+                monthKey
+              });
+            });
+
+            const monthlyData = Array.from(monthlyMap.values()).sort((a, b) => a.date - b.date);
+
+            setHistoricalData(monthlyData);
+            setLoading(false);
+          } catch (err) {
+            console.error('Error fetching data:', err);
+            setError(err.message);
+            setLoading(false);
+          }
+        };
+
+        fetchData();
+      }, []);
+
+      const filterDataByRange = useCallback((data) => {
+        if (timeRange === 'ALL') return data;
+
+        const now = Date.now() / 1000;
+        const ranges = {
+          '1Y': 365 * 24 * 60 * 60,
+          '6M': 180 * 24 * 60 * 60,
+          '3M': 90 * 24 * 60 * 60
+        };
+
+        return data.filter(d => d.date > now - ranges[timeRange]);
+      }, [timeRange]);
+
+      const toggleCoin = (symbol) => {
+        setHiddenCoins(prev => {
+          const newSet = new Set(prev);
+          if (newSet.has(symbol)) {
+            newSet.delete(symbol);
+          } else {
+            newSet.add(symbol);
+          }
+          return newSet;
+        });
+      };
+
+      const filteredData = filterDataByRange(historicalData);
+      const allCoins = [...topStablecoins, '기타'];
+      const visibleCoins = allCoins.filter(c => !hiddenCoins.has(c));
+
+      const totalSupply = pieData.reduce((sum, d) => sum + d.value, 0);
+
+      const formatBillion = (value) => {
+        if (value >= 1e9) return `$${(value / 1e9).toFixed(1)}B`;
+        if (value >= 1e6) return `$${(value / 1e6).toFixed(1)}M`;
+        return `$${value.toFixed(0)}`;
+      };
+
+      const CustomTooltip = ({ active, payload, label }) => {
+        if (active && payload && payload.length) {
+          const total = payload.reduce((sum, p) => sum + (p.value || 0), 0);
+          return (
+            <div style={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '8px', padding: '16px', boxShadow: '0 10px 15px rgba(0,0,0,0.3)' }}>
+              <p style={{ color: 'white', fontWeight: '600', marginBottom: '8px', borderBottom: '1px solid #374151', paddingBottom: '8px' }}>{label}</p>
+              <div style={{ maxHeight: '256px', overflowY: 'auto' }}>
+                {payload.slice().reverse().map((entry, index) => (
+                  <div key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', marginBottom: '4px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ width: '12px', height: '12px', borderRadius: '2px', backgroundColor: entry.fill }} />
+                      <span style={{ color: '#d1d5db', fontSize: '14px' }}>{entry.dataKey}</span>
+                    </div>
+                    <span style={{ color: 'white', fontSize: '14px', fontWeight: '500' }}>
+                      {formatBillion(entry.value)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ borderTop: '1px solid #374151', marginTop: '8px', paddingTop: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#9ca3af', fontSize: '14px' }}>총 발행량</span>
+                <span style={{ color: 'white', fontWeight: '600' }}>{formatBillion(total)}</span>
+              </div>
+            </div>
+          );
+        }
+        return null;
+      };
+
+      const CustomPieTooltip = ({ active, payload }) => {
+        if (active && payload && payload.length) {
+          const data = payload[0];
+          const percentage = ((data.value / totalSupply) * 100).toFixed(1);
+          return (
+            <div style={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '8px', padding: '12px', boxShadow: '0 10px 15px rgba(0,0,0,0.3)' }}>
+              <p style={{ color: 'white', fontWeight: '600' }}>{data.name}</p>
+              <p style={{ color: '#9ca3af', fontSize: '14px' }}>{data.payload.fullName}</p>
+              <p style={{ color: 'white', marginTop: '4px' }}>{formatBillion(data.value)}</p>
+              <p style={{ color: '#9ca3af', fontSize: '14px' }}>시장 점유율: {percentage}%</p>
+            </div>
+          );
+        }
+        return null;
+      };
+
+      const CustomLegend = () => (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingLeft: '16px' }}>
+          {allCoins.map((coin, index) => {
+            const isHidden = hiddenCoins.has(coin);
+            return (
+              <button
+                key={coin}
+                onClick={() => toggleCoin(coin)}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '8px', 
+                  textAlign: 'left', 
+                  opacity: isHidden ? 0.4 : 1,
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '2px 0'
+                }}
+              >
+                <div style={{ width: '16px', height: '16px', borderRadius: '2px', flexShrink: 0, backgroundColor: getStablecoinColor(coin, index) }} />
+                <span style={{ color: '#d1d5db', fontSize: '14px' }}>{coin}</span>
+              </button>
+            );
+          })}
+        </div>
+      );
+
+      if (loading) {
+        return (
+          <div className="min-h-screen bg-black flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+              <p className="text-gray-400">DefiLlama에서 데이터를 불러오는 중...</p>
+            </div>
+          </div>
+        );
+      }
+
+      if (error) {
+        return (
+          <div className="min-h-screen bg-black flex items-center justify-center">
+            <div className="bg-red-900/20 border border-red-500 rounded-lg p-6 max-w-md">
+              <h2 className="text-red-400 font-semibold mb-2">데이터 로딩 오류</h2>
+              <p className="text-gray-400">{error}</p>
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className="min-h-screen bg-black text-white p-6">
+          <div className="max-w-7xl mx-auto">
+            {/* Header */}
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold mb-2">스테이블코인 발행량</h1>
+              <p className="text-gray-500">데이터 출처: DefiLlama API</p>
+            </div>
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+              <div className="bg-gray-900/50 rounded-xl p-5 border border-gray-800">
+                <p className="text-gray-400 text-sm mb-1">총 발행량</p>
+                <p className="text-2xl font-bold text-white">
+                  {formatBillion(totalSupply)}
+                </p>
+              </div>
+              <div className="bg-gray-900/50 rounded-xl p-5 border border-gray-800">
+                <p className="text-gray-400 text-sm mb-1">1위 스테이블코인</p>
+                <p className="text-2xl font-bold" style={{ color: getStablecoinColor(pieData[0]?.name, 0) }}>
+                  {pieData[0]?.name || '-'}
+                </p>
+                <p className="text-gray-500 text-sm">{formatBillion(pieData[0]?.value || 0)}</p>
+              </div>
+              <div className="bg-gray-900/50 rounded-xl p-5 border border-gray-800">
+                <p className="text-gray-400 text-sm mb-1">추적 중인 스테이블코인</p>
+                <p className="text-2xl font-bold text-white">
+                  상위 10개 + 기타
+                </p>
+              </div>
+            </div>
+
+            {/* Controls */}
+            <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
+              {/* Tabs */}
+              <div className="flex bg-gray-900 rounded-lg p-1">
+                <button
+                  onClick={() => setActiveTab('bar')}
+                  className={`px-4 py-2 rounded-md font-medium transition ${
+                    activeTab === 'bar'
+                      ? 'bg-white text-black'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  막대 차트
+                </button>
+                <button
+                  onClick={() => setActiveTab('pie')}
+                  className={`px-4 py-2 rounded-md font-medium transition ${
+                    activeTab === 'pie'
+                      ? 'bg-white text-black'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  파이 차트
+                </button>
+              </div>
+
+              {/* Time Range */}
+              {activeTab === 'bar' && (
+                <div className="flex gap-2">
+                  {['3M', '6M', '1Y', 'ALL'].map(range => (
+                    <button
+                      key={range}
+                      onClick={() => setTimeRange(range)}
+                      className={`px-4 py-2 rounded-lg font-medium transition ${
+                        timeRange === range
+                          ? 'bg-white text-black'
+                          : 'bg-gray-900 text-gray-400 hover:text-white'
+                      }`}
+                    >
+                      {range}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Bar Chart */}
+            {activeTab === 'bar' && (
+              <div className="bg-gray-900/30 rounded-xl p-6 border border-gray-800">
+                <div className="flex">
+                  <div className="flex-1" style={{ height: '500px' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={filteredData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                        <XAxis
+                          dataKey="monthLabel"
+                          stroke="#6B7280"
+                          fontSize={11}
+                          tickLine={false}
+                          angle={-45}
+                          textAnchor="end"
+                          interval={Math.max(0, Math.floor(filteredData.length / 12) - 1)}
+                        />
+                        <YAxis
+                          stroke="#6B7280"
+                          fontSize={12}
+                          tickLine={false}
+                          axisLine={false}
+                          tickFormatter={(value) => `$${(value / 1e9).toFixed(0)}B`}
+                        />
+                        <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+                        {visibleCoins.map((coin) => (
+                          <Bar
+                            key={coin}
+                            dataKey={coin}
+                            stackId="a"
+                            fill={getStablecoinColor(coin, allCoins.indexOf(coin))}
+                          />
+                        ))}
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                  {/* Legend */}
+                  <div className="w-36 flex-shrink-0">
+                    <p className="text-gray-400 text-xs mb-3 pl-4">범례 (클릭하여 토글)</p>
+                    <CustomLegend />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Pie Chart */}
+            {activeTab === 'pie' && (
+              <div className="bg-gray-900/30 rounded-xl p-6 border border-gray-800">
+                <div className="flex">
+                  <div className="flex-1" style={{ height: '500px' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={pieData.filter(d => !hiddenCoins.has(d.name))}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={100}
+                          outerRadius={180}
+                          paddingAngle={2}
+                          dataKey="value"
+                          nameKey="name"
+                        >
+                          {pieData.filter(d => !hiddenCoins.has(d.name)).map((entry) => (
+                            <Cell
+                              key={`cell-${entry.name}`}
+                              fill={getStablecoinColor(entry.name, allCoins.indexOf(entry.name))}
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip content={<CustomPieTooltip />} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  {/* Legend */}
+                  <div className="w-36 flex-shrink-0">
+                    <p className="text-gray-400 text-xs mb-3 pl-4">범례 (클릭하여 토글)</p>
+                    <CustomLegend />
+                  </div>
+                </div>
+
+                {/* Pie Chart Table */}
+                <div className="mt-6 overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="text-left text-gray-400 text-sm border-b border-gray-800">
+                        <th className="pb-3 pl-4">#</th>
+                        <th className="pb-3">이름</th>
+                        <th className="pb-3 text-right">발행량</th>
+                        <th className="pb-3 text-right pr-4">점유율</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pieData.map((stable, i) => (
+                        <tr
+                          key={stable.name}
+                          className={`border-b border-gray-800/50 ${hiddenCoins.has(stable.name) ? 'opacity-40' : ''}`}
+                        >
+                          <td className="py-3 pl-4 text-gray-500">{i + 1}</td>
+                          <td className="py-3">
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="w-3 h-3 rounded-sm"
+                                style={{ backgroundColor: getStablecoinColor(stable.name, i) }}
+                              />
+                              <span className="font-medium">{stable.name}</span>
+                              <span className="text-gray-500 text-sm">{stable.fullName}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 text-right text-gray-300">
+                            {formatBillion(stable.value)}
+                          </td>
+                          <td className="py-3 text-right pr-4 text-gray-400">
+                            {((stable.value / totalSupply) * 100).toFixed(1)}%
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Footer */}
+            <div className="text-center text-gray-600 text-sm mt-8">
+              <p>DefiLlama API를 통해 실시간 업데이트</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<StablecoinChart />);
+  </script>
+</body>
+</html>
