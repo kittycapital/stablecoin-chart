@@ -56,7 +56,7 @@ def fetch_stablecoin_data():
             data = res.json()
             tokens = data.get('tokens', [])
             historical_by_coin[symbol] = {
-                item['date']: item.get('circulating', {}).get('peggedUSD', 0)
+                int(item['date']): item.get('circulating', {}).get('peggedUSD', 0)
                 for item in tokens
             }
             time.sleep(0.5)  # Rate limiting
@@ -75,7 +75,7 @@ def fetch_stablecoin_data():
     
     # Get all unique dates from total history
     for item in total_hist_data:
-        date = item['date']
+        date = int(item['date'])  # Convert to int
         total = item.get('totalCirculating', {}).get('peggedUSD', 0)
         if total > 0:
             date_map[date] = {
