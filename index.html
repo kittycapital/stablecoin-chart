@@ -1,437 +1,619 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>스테이블코인 발행량</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body { background-color: #000; margin: 0; }
-    .loader {
-      border: 3px solid #333;
-      border-top: 3px solid #fff;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<meta name="description" content="스테이블코인 대시보드 - 실시간 시가총액, 점유율, 체인별 분포 | Herdvibe">
+<title>스테이블코인 대시보드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html{scrollbar-width:none}
+html::-webkit-scrollbar{display:none}
+body{background:#000;color:#e4e4e7;font-family:'Noto Sans KR',sans-serif;min-height:100vh}
+
+/* Nav */
+.top-nav{position:sticky;top:0;z-index:100;background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);border-bottom:1px solid #1a1a1a;padding:0 16px;display:flex;align-items:center;justify-content:center;gap:24px;height:52px}
+.nav-logo{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;color:#a78bfa;white-space:nowrap;letter-spacing:-0.5px}
+.nav-title{font-size:14px;font-weight:600;color:#e4e4e7;white-space:nowrap}
+
+/* Container */
+.container{max-width:960px;margin:0 auto;padding:16px 12px 60px}
+
+/* Cards */
+.card{background:#0a0a0a;border:1px solid #1a1a1a;border-radius:12px;padding:16px;margin-bottom:16px}
+.card-title{font-size:14px;font-weight:600;color:#a1a1aa;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+
+/* Summary Cards */
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:16px}
+.summary-card{background:#0a0a0a;border:1px solid #1a1a1a;border-radius:10px;padding:14px 16px}
+.summary-label{font-size:11px;color:#71717a;font-weight:500;margin-bottom:4px}
+.summary-value{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:#f4f4f5}
+.summary-sub{font-family:'JetBrains Mono',monospace;font-size:12px;margin-top:2px}
+.up{color:#22c55e}
+.down{color:#ef4444}
+
+/* Chart */
+.chart-box{position:relative;width:100%;margin:8px 0}
+.chart-wrapper{position:relative;height:340px}
+.chart-wrapper canvas{width:100%!important;height:100%!important}
+
+/* Watermark */
+.watermark{position:relative}
+.watermark::after{content:'Herdvibe.com';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:600;color:rgba(255,255,255,0.06);pointer-events:none;z-index:2;letter-spacing:2px}
+
+/* Table */
+.coin-table{width:100%;border-collapse:collapse}
+.coin-table th{text-align:left;font-size:11px;color:#71717a;font-weight:500;padding:8px 10px;border-bottom:1px solid #1a1a1a;white-space:nowrap}
+.coin-table td{padding:10px;border-bottom:1px solid #111;font-size:13px;white-space:nowrap}
+.coin-table tr:hover{background:#111}
+.coin-name{display:flex;align-items:center;gap:8px}
+.coin-icon{width:22px;height:22px;border-radius:50%;background:#222;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#a78bfa;flex-shrink:0}
+.coin-symbol{font-family:'JetBrains Mono',monospace;font-weight:600;color:#f4f4f5;font-size:13px}
+.coin-fullname{color:#71717a;font-size:11px}
+.mcap-val{font-family:'JetBrains Mono',monospace;font-weight:600;color:#e4e4e7}
+.change-val{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600}
+.peg-val{font-family:'JetBrains Mono',monospace;font-size:12px}
+.peg-ok{color:#22c55e}
+.peg-warn{color:#eab308}
+.peg-bad{color:#ef4444}
+.dom-bar{height:6px;background:#1a1a1a;border-radius:3px;overflow:hidden;min-width:60px}
+.dom-fill{height:100%;border-radius:3px;transition:width 0.6s ease}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap}
+.tab{background:#111;border:1px solid #1a1a1a;border-radius:6px;padding:6px 12px;font-size:12px;color:#a1a1aa;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all 0.2s}
+.tab:hover{border-color:#333;color:#e4e4e7}
+.tab.active{background:#a78bfa;border-color:#a78bfa;color:#000;font-weight:600}
+
+/* Share */
+.share-bar{display:flex;gap:6px;justify-content:center;margin:12px 0 4px;flex-wrap:wrap}
+.share-btn{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:6px;border:1px solid #222;background:#0a0a0a;color:#a1a1aa;font-size:11px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all 0.2s}
+.share-btn:hover{border-color:#444;color:#e4e4e7}
+.share-btn svg{width:14px;height:14px;flex-shrink:0}
+.share-btn.twitter:hover{border-color:#1d9bf0;color:#1d9bf0}
+.share-btn.kakao:hover{border-color:#fee500;color:#fee500}
+.share-btn.telegram:hover{border-color:#26a5e4;color:#26a5e4}
+.share-btn.copy:hover{border-color:#22c55e;color:#22c55e}
+.share-btn.copied{border-color:#22c55e;color:#22c55e}
+
+/* Chain dist */
+.chain-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.chain-item{background:#111;border:1px solid #1a1a1a;border-radius:8px;padding:10px 12px}
+.chain-name{font-size:12px;color:#a1a1aa;font-weight:500;margin-bottom:4px}
+.chain-val{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:#e4e4e7}
+.chain-pct{font-family:'JetBrains Mono',monospace;font-size:11px;color:#71717a}
+
+/* Loading */
+.loading{display:flex;align-items:center;justify-content:center;gap:8px;padding:40px;color:#71717a;font-size:13px}
+.spinner{width:18px;height:18px;border:2px solid #333;border-top-color:#a78bfa;border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Toast */
+.toast{position:fixed;bottom:20px;right:20px;background:#22c55e;color:#000;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;z-index:9999;opacity:0;transform:translateY(10px);transition:all 0.3s ease;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+
+/* Last updated */
+.last-updated{text-align:center;font-size:11px;color:#52525b;margin-top:8px}
+
+/* Scroll table */
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+/* Responsive */
+@media(max-width:640px){
+  .top-nav{gap:12px;padding:0 10px}
+  .nav-logo{font-size:13px}
+  .nav-title{font-size:12px}
+  .summary-value{font-size:16px}
+  .chart-wrapper{height:260px}
+  .watermark::after{font-size:20px}
+  .coin-table td,.coin-table th{padding:8px 6px;font-size:12px}
+  .chain-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}
+}
+</style>
 </head>
-<body class="bg-black text-white min-h-screen">
-  <div id="app" class="max-w-7xl mx-auto p-6">
-    <!-- Loading State -->
-    <div id="loading" class="flex flex-col items-center justify-center min-h-screen">
-      <div class="loader mb-4"></div>
-      <p class="text-gray-400">데이터를 불러오는 중...</p>
+<body>
+
+<nav class="top-nav">
+    <div class="nav-logo">Herdvibe</div>
+    <div class="nav-title">스테이블코인 대시보드</div>
+</nav>
+
+<div class="container">
+    <!-- Summary -->
+    <div class="summary-grid" id="summary-grid">
+        <div class="summary-card"><div class="summary-label">전체 시가총액</div><div class="summary-value" id="total-mcap">-</div><div class="summary-sub" id="total-mcap-change">-</div></div>
+        <div class="summary-card"><div class="summary-label">USDT 점유율</div><div class="summary-value" id="usdt-dom">-</div><div class="summary-sub" id="usdt-mcap-sub">-</div></div>
+        <div class="summary-card"><div class="summary-label">USDC 점유율</div><div class="summary-value" id="usdc-dom">-</div><div class="summary-sub" id="usdc-mcap-sub">-</div></div>
+        <div class="summary-card"><div class="summary-label">기타 스테이블코인</div><div class="summary-value" id="others-mcap">-</div><div class="summary-sub" id="others-count">-</div></div>
     </div>
 
-    <!-- Main Content (hidden initially) -->
-    <div id="content" class="hidden">
-      <!-- Header -->
-      <div class="mb-8">
-        <h1 class="text-3xl font-bold mb-2">스테이블코인 발행량</h1>
-        <p class="text-gray-500">데이터 출처: DefiLlama API | 마지막 업데이트: <span id="lastUpdated">-</span></p>
-      </div>
-
-      <!-- Stats Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div class="bg-gray-900/50 rounded-xl p-5 border border-gray-800">
-          <p class="text-gray-400 text-sm mb-1">총 발행량</p>
-          <p id="totalSupply" class="text-2xl font-bold text-white">-</p>
+    <!-- Market Cap History Chart -->
+    <div class="card">
+        <div class="card-title">📊 스테이블코인 시가총액 추이</div>
+        <div class="tabs" id="period-tabs">
+            <button class="tab active" data-v="365">1년</button>
+            <button class="tab" data-v="180">6개월</button>
+            <button class="tab" data-v="90">3개월</button>
+            <button class="tab" data-v="30">1개월</button>
+            <button class="tab" data-v="0">전체</button>
         </div>
-        <div class="bg-gray-900/50 rounded-xl p-5 border border-gray-800">
-          <p class="text-gray-400 text-sm mb-1">1위 스테이블코인</p>
-          <p id="topStablecoin" class="text-2xl font-bold">-</p>
-          <p id="topStablecoinValue" class="text-gray-500 text-sm">-</p>
+        <div class="chart-box">
+            <div class="chart-wrapper watermark"><canvas id="mcap-chart"></canvas></div>
         </div>
-        <div class="bg-gray-900/50 rounded-xl p-5 border border-gray-800">
-          <p class="text-gray-400 text-sm mb-1">추적 중인 스테이블코인</p>
-          <p class="text-2xl font-bold text-white">상위 10개 + 기타</p>
-        </div>
-      </div>
-
-      <!-- Controls -->
-      <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
-        <!-- Tabs -->
-        <div class="flex bg-gray-900 rounded-lg p-1">
-          <button id="barTabBtn" onclick="switchTab('bar')" class="px-4 py-2 rounded-md font-medium transition bg-white text-black">
-            막대 차트
-          </button>
-          <button id="pieTabBtn" onclick="switchTab('pie')" class="px-4 py-2 rounded-md font-medium transition text-gray-400 hover:text-white">
-            파이 차트
-          </button>
-        </div>
-
-        <!-- Time Range -->
-        <div id="timeRangeButtons" class="flex gap-2">
-          <button onclick="setTimeRange('3M')" class="time-btn px-4 py-2 rounded-lg font-medium transition bg-gray-900 text-gray-400 hover:text-white" data-range="3M">3M</button>
-          <button onclick="setTimeRange('6M')" class="time-btn px-4 py-2 rounded-lg font-medium transition bg-gray-900 text-gray-400 hover:text-white" data-range="6M">6M</button>
-          <button onclick="setTimeRange('1Y')" class="time-btn px-4 py-2 rounded-lg font-medium transition bg-gray-900 text-gray-400 hover:text-white" data-range="1Y">1Y</button>
-          <button onclick="setTimeRange('ALL')" class="time-btn px-4 py-2 rounded-lg font-medium transition bg-white text-black" data-range="ALL">ALL</button>
-        </div>
-      </div>
-
-      <!-- Bar Chart Container -->
-      <div id="barChartContainer" class="bg-gray-900/30 rounded-xl p-6 border border-gray-800">
-        <div class="flex">
-          <div class="flex-1" style="height: 500px;">
-            <canvas id="barChart"></canvas>
-          </div>
-          <div id="barLegend" class="w-40 flex-shrink-0 pl-4">
-            <p class="text-gray-400 text-xs mb-3">범례 (클릭하여 토글)</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Pie Chart Container -->
-      <div id="pieChartContainer" class="bg-gray-900/30 rounded-xl p-6 border border-gray-800 hidden">
-        <div class="flex">
-          <div class="flex-1 flex justify-center" style="height: 500px;">
-            <canvas id="pieChart" style="max-width: 500px;"></canvas>
-          </div>
-          <div id="pieLegend" class="w-40 flex-shrink-0 pl-4">
-            <p class="text-gray-400 text-xs mb-3">범례 (클릭하여 토글)</p>
-          </div>
-        </div>
-
-        <!-- Table -->
-        <div class="mt-6 overflow-x-auto">
-          <table class="w-full">
-            <thead>
-              <tr class="text-left text-gray-400 text-sm border-b border-gray-800">
-                <th class="pb-3 pl-4">#</th>
-                <th class="pb-3">이름</th>
-                <th class="pb-3 text-right">발행량</th>
-                <th class="pb-3 text-right pr-4">점유율</th>
-              </tr>
-            </thead>
-            <tbody id="pieTable"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Footer -->
-      <div class="text-center text-gray-600 text-sm mt-8">
-        <p>매일 자동 업데이트 (09:00 KST)</p>
-      </div>
     </div>
-  </div>
 
-  <script>
-    // Brand colors
-    const STABLECOIN_COLORS = {
-      'USDT': '#26A17B',
-      'USDC': '#2775CA',
-      'DAI': '#F5AC37',
-      'FDUSD': '#5BC0EB',
-      'TUSD': '#1A237E',
-      'USDD': '#8B5CF6',
-      'FRAX': '#DC2626',
-      'LUSD': '#3B82F6',
-      'USDP': '#10B981',
-      'GUSD': '#00DCFA',
-      'PYUSD': '#0066CC',
-      'USDe': '#14B8A6',
-      'USDS': '#F59E0B',
-      'BUSD': '#F0B90B',
-      'crvUSD': '#FF6B6B',
-      'GHO': '#8B5CF6',
-      '기타': '#6B7280',
-    };
+    <!-- Dominance Chart -->
+    <div class="card">
+        <div class="card-title">🥧 스테이블코인 점유율</div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;justify-content:center">
+            <div style="width:260px;height:260px;position:relative"><canvas id="dom-chart"></canvas></div>
+            <div id="dom-legend" style="font-size:13px;display:flex;flex-direction:column;gap:6px"></div>
+        </div>
+    </div>
 
-    const FALLBACK_COLORS = ['#EC4899', '#8B5CF6', '#06B6D4', '#84CC16', '#F97316', '#EF4444', '#A855F7', '#22D3EE', '#FACC15', '#FB7185'];
+    <!-- Top Stablecoins Table -->
+    <div class="card">
+        <div class="card-title">🏆 상위 스테이블코인</div>
+        <div class="table-wrap">
+            <table class="coin-table">
+                <thead><tr><th>#</th><th>이름</th><th>시가총액</th><th>7일 변동</th><th>점유율</th><th>페그</th></tr></thead>
+                <tbody id="coin-tbody"><tr><td colspan="6"><div class="loading"><div class="spinner"></div>데이터 로딩 중...</div></td></tr></tbody>
+            </table>
+        </div>
+    </div>
 
-    function getColor(symbol, index) {
-      return STABLECOIN_COLORS[symbol] || FALLBACK_COLORS[index % FALLBACK_COLORS.length];
+    <!-- Chain Distribution -->
+    <div class="card">
+        <div class="card-title">⛓️ 체인별 스테이블코인 분포</div>
+        <div class="chart-box">
+            <div class="chart-wrapper watermark" style="height:300px"><canvas id="chain-chart"></canvas></div>
+        </div>
+        <div class="chain-grid" id="chain-grid"></div>
+    </div>
+
+    <!-- Individual Stablecoin Charts -->
+    <div class="card">
+        <div class="card-title">📈 개별 스테이블코인 시가총액 추이</div>
+        <div class="tabs" id="coin-tabs"></div>
+        <div class="chart-box">
+            <div class="chart-wrapper watermark"><canvas id="individual-chart"></canvas></div>
+        </div>
+    </div>
+
+    <!-- Share -->
+    <div class="share-bar">
+        <button class="share-btn twitter" onclick="shareTwitter()"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>트위터</button>
+        <button class="share-btn kakao" onclick="shareKakao()"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c-5.52 0-10 3.36-10 7.5 0 2.66 1.74 5 4.36 6.33-.14.53-.9 3.4-.93 3.61 0 0-.02.17.09.23.11.07.24.03.24.03.32-.04 3.7-2.42 4.28-2.83.62.09 1.27.13 1.96.13 5.52 0 10-3.36 10-7.5S17.52 3 12 3z"/></svg>카카오톡</button>
+        <button class="share-btn telegram" onclick="shareTelegram()"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>텔레그램</button>
+        <button class="share-btn copy" onclick="copyLink()" id="copyLinkBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>링크복사</button>
+    </div>
+
+    <div class="last-updated" id="last-updated"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SHARE_URL = 'https://herdvibe.com/stablecoin-dashboard';
+const SHARE_TITLE = '스테이블코인 대시보드 - 실시간 시가총액 & 점유율';
+const SHARE_DESC = '스테이블코인 시장 실시간 분석 대시보드 | Herdvibe';
+
+const COLORS = ['#a78bfa','#38bdf8','#22c55e','#f59e0b','#ef4444','#ec4899','#06b6d4','#84cc16','#f97316','#8b5cf6','#14b8a6','#e879f9'];
+const TOP_COINS = ['USDT','USDC','DAI','USDe','USDS','FDUSD','PYUSD','TUSD','BUSD','USD1','RLUSD','USDX'];
+
+let allStablecoins = [];
+let chainData = [];
+let historyCache = {};
+let mcapChart, domChart, chainChart, individualChart;
+
+// Format
+function fmt(n, d=1) {
+    if (n >= 1e12) return '$' + (n/1e12).toFixed(d) + 'T';
+    if (n >= 1e9) return '$' + (n/1e9).toFixed(d) + 'B';
+    if (n >= 1e6) return '$' + (n/1e6).toFixed(d) + 'M';
+    return '$' + n.toFixed(0);
+}
+function pct(n) { return (n >= 0 ? '+' : '') + n.toFixed(2) + '%'; }
+
+// Toast
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Share
+function shareTwitter() {
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(SHARE_TITLE)}&url=${encodeURIComponent(SHARE_URL)}`, '_blank');
+}
+function shareKakao() {
+    if (window.Kakao && !Kakao.isInitialized()) Kakao.init('a43ed7b39fac35458f4f9df925a279b5');
+    if (window.Kakao) {
+        Kakao.Share.sendDefault({
+            objectType: 'feed',
+            content: { title: SHARE_TITLE, description: SHARE_DESC, imageUrl: 'https://herdvibe.com/og-stablecoin.png', link: { mobileWebUrl: SHARE_URL, webUrl: SHARE_URL } }
+        });
     }
-
-    function formatBillion(value) {
-      if (value >= 1e9) return `$${(value / 1e9).toFixed(1)}B`;
-      if (value >= 1e6) return `$${(value / 1e6).toFixed(1)}M`;
-      return `$${value.toFixed(0)}`;
-    }
-
-    // Global state
-    let allHistoricalData = [];
-    let pieData = [];
-    let topStablecoins = [];
-    let currentTimeRange = 'ALL';
-    let currentTab = 'bar';
-    let barChart = null;
-    let pieChart = null;
-    let hiddenCoins = new Set();
-    let latestDataDate = 0;  // Store the latest date in the data
-
-    // Load data from local JSON file
-    async function init() {
-      try {
-        const response = await fetch('data.json');
-        const data = await response.json();
-
-        // Set data from JSON
-        topStablecoins = data.topStablecoins;
-        pieData = data.pieData;
-        allHistoricalData = data.historicalData;
-
-        // Find the latest date in the data
-        if (allHistoricalData.length > 0) {
-          latestDataDate = Math.max(...allHistoricalData.map(d => d.date));
+}
+function shareTelegram() {
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(SHARE_URL)}&text=${encodeURIComponent(SHARE_TITLE)}`, '_blank');
+}
+function copyLink() {
+    const btn = document.getElementById('copyLinkBtn');
+    try {
+        if (window.parent !== window) {
+            window.parent.postMessage({ type: 'copy', text: SHARE_URL }, '*');
+        } else {
+            navigator.clipboard.writeText(SHARE_URL);
         }
+        btn.classList.add('copied');
+        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>복사됨!';
+        showToast('링크가 복사되었습니다 ✓');
+        setTimeout(() => {
+            btn.classList.remove('copied');
+            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>링크복사';
+        }, 2000);
+    } catch(e) { showToast('복사 실패'); }
+}
 
-        // Update last updated time
-        document.getElementById('lastUpdated').textContent = data.lastUpdated;
+// Fetch
+async function fetchJSON(url) {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(r.status);
+    return r.json();
+}
 
-        // Update UI
-        const totalSupply = pieData.reduce((sum, d) => sum + d.value, 0);
-        document.getElementById('totalSupply').textContent = formatBillion(totalSupply);
-        document.getElementById('topStablecoin').textContent = pieData[0].name;
-        document.getElementById('topStablecoin').style.color = getColor(pieData[0].name, 0);
-        document.getElementById('topStablecoinValue').textContent = formatBillion(pieData[0].value);
+// Init
+async function init() {
+    try {
+        const [stables, chains] = await Promise.all([
+            fetchJSON('https://stablecoins.llama.fi/stablecoins?includePrices=true'),
+            fetchJSON('https://stablecoins.llama.fi/stablecoinchains')
+        ]);
 
-        // Build charts
-        buildBarChart();
-        buildPieChart();
-        buildLegends();
-        buildPieTable();
+        allStablecoins = (stables.peggedAssets || [])
+            .filter(s => s.pegType === 'peggedUSD')
+            .sort((a, b) => (b.circulating?.peggedUSD || 0) - (a.circulating?.peggedUSD || 0));
 
-        // Show content
-        document.getElementById('loading').classList.add('hidden');
-        document.getElementById('content').classList.remove('hidden');
+        chainData = (chains || []).sort((a, b) => {
+            const aVal = a.totalCirculatingUSD?.peggedUSD || 0;
+            const bVal = b.totalCirculatingUSD?.peggedUSD || 0;
+            return bVal - aVal;
+        });
 
-      } catch (error) {
-        console.error('Error:', error);
-        document.getElementById('loading').innerHTML = `
-          <div class="bg-red-900/20 border border-red-500 rounded-lg p-6">
-            <h2 class="text-red-400 font-semibold mb-2">데이터 로딩 오류</h2>
-            <p class="text-gray-400">${error.message}</p>
-          </div>
-        `;
-      }
+        renderSummary();
+        renderTable();
+        renderDominance();
+        renderChains();
+        await loadMcapHistory();
+        setupCoinTabs();
+
+        document.getElementById('last-updated').textContent = '마지막 업데이트: ' + new Date().toLocaleString('ko-KR');
+    } catch (e) {
+        console.error('Init error:', e);
+        document.getElementById('coin-tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#ef4444">데이터 로딩 실패. 잠시 후 다시 시도해주세요.</td></tr>';
     }
+}
 
-    // Filter based on the latest date in the data, not current browser time
-    function filterDataByRange(data) {
-      if (currentTimeRange === 'ALL') return data;
-      
-      // Use the latest date in the data as reference point
-      const referenceDate = latestDataDate;
-      const ranges = { '1Y': 365 * 86400, '6M': 180 * 86400, '3M': 90 * 86400 };
-      const cutoffDate = referenceDate - ranges[currentTimeRange];
-      
-      return data.filter(d => d.date >= cutoffDate);
-    }
+// Summary
+function renderSummary() {
+    const total = allStablecoins.reduce((s, c) => s + (c.circulating?.peggedUSD || 0), 0);
+    const usdt = allStablecoins.find(c => c.symbol === 'USDT');
+    const usdc = allStablecoins.find(c => c.symbol === 'USDC');
+    const usdtMcap = usdt?.circulating?.peggedUSD || 0;
+    const usdcMcap = usdc?.circulating?.peggedUSD || 0;
+    const othersMcap = total - usdtMcap - usdcMcap;
 
-    function buildBarChart() {
-      const ctx = document.getElementById('barChart').getContext('2d');
-      const filteredData = filterDataByRange(allHistoricalData);
-      const allCoins = [...topStablecoins, '기타'];
-      const visibleCoins = allCoins.filter(c => !hiddenCoins.has(c));
+    document.getElementById('total-mcap').textContent = fmt(total, 1);
+    const totalChange7d = calcChange7d(allStablecoins);
+    const chEl = document.getElementById('total-mcap-change');
+    chEl.textContent = '7일 ' + pct(totalChange7d);
+    chEl.className = 'summary-sub ' + (totalChange7d >= 0 ? 'up' : 'down');
 
-      const datasets = visibleCoins.map((coin, i) => ({
-        label: coin,
-        data: filteredData.map(d => d[coin] || 0),
-        backgroundColor: getColor(coin, allCoins.indexOf(coin)),
-        borderWidth: 0,
-      }));
+    document.getElementById('usdt-dom').textContent = (usdtMcap / total * 100).toFixed(1) + '%';
+    document.getElementById('usdt-mcap-sub').textContent = fmt(usdtMcap, 1);
+    document.getElementById('usdt-mcap-sub').className = 'summary-sub';
 
-      if (barChart) barChart.destroy();
+    document.getElementById('usdc-dom').textContent = (usdcMcap / total * 100).toFixed(1) + '%';
+    document.getElementById('usdc-mcap-sub').textContent = fmt(usdcMcap, 1);
+    document.getElementById('usdc-mcap-sub').className = 'summary-sub';
 
-      barChart = new Chart(ctx, {
+    document.getElementById('others-mcap').textContent = fmt(othersMcap, 1);
+    document.getElementById('others-count').textContent = (allStablecoins.length - 2) + '개 코인';
+    document.getElementById('others-count').className = 'summary-sub';
+}
+
+function calcChange7d(coins) {
+    let now = 0, prev = 0;
+    coins.forEach(c => {
+        const curr = c.circulating?.peggedUSD || 0;
+        const p = c.circulatingPrevWeek?.peggedUSD || curr;
+        now += curr;
+        prev += p;
+    });
+    return prev > 0 ? ((now - prev) / prev) * 100 : 0;
+}
+
+// Table
+function renderTable() {
+    const total = allStablecoins.reduce((s, c) => s + (c.circulating?.peggedUSD || 0), 0);
+    const top = allStablecoins.slice(0, 15);
+    const tbody = document.getElementById('coin-tbody');
+
+    tbody.innerHTML = top.map((c, i) => {
+        const mcap = c.circulating?.peggedUSD || 0;
+        const prev = c.circulatingPrevWeek?.peggedUSD || mcap;
+        const change = prev > 0 ? ((mcap - prev) / prev) * 100 : 0;
+        const dom = (mcap / total * 100);
+        const price = c.price || 1;
+        const pegDev = Math.abs(price - 1) * 100;
+        const pegClass = pegDev < 0.1 ? 'peg-ok' : pegDev < 0.5 ? 'peg-warn' : 'peg-bad';
+        const color = COLORS[i % COLORS.length];
+
+        return `<tr>
+            <td style="color:#71717a;font-size:12px">${i + 1}</td>
+            <td><div class="coin-name"><div class="coin-icon" style="color:${color};border:1px solid ${color}33">${c.symbol?.charAt(0) || '?'}</div><div><div class="coin-symbol">${c.symbol || '-'}</div><div class="coin-fullname">${c.name || ''}</div></div></div></td>
+            <td class="mcap-val">${fmt(mcap, 2)}</td>
+            <td class="change-val ${change >= 0 ? 'up' : 'down'}">${pct(change)}</td>
+            <td><div class="dom-bar"><div class="dom-fill" style="width:${Math.max(dom, 1)}%;background:${color}"></div></div><div style="font-family:'JetBrains Mono';font-size:11px;color:#71717a;margin-top:2px">${dom.toFixed(1)}%</div></td>
+            <td class="peg-val ${pegClass}">${price ? '$' + price.toFixed(4) : '-'}</td>
+        </tr>`;
+    }).join('');
+}
+
+// Dominance Pie
+function renderDominance() {
+    const total = allStablecoins.reduce((s, c) => s + (c.circulating?.peggedUSD || 0), 0);
+    const topN = allStablecoins.slice(0, 8);
+    const topSum = topN.reduce((s, c) => s + (c.circulating?.peggedUSD || 0), 0);
+    const labels = [...topN.map(c => c.symbol), '기타'];
+    const data = [...topN.map(c => c.circulating?.peggedUSD || 0), total - topSum];
+    const colors = [...COLORS.slice(0, 8), '#333'];
+
+    const ctx = document.getElementById('dom-chart').getContext('2d');
+    domChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0, hoverBorderWidth: 2, hoverBorderColor: '#fff' }] },
+        options: {
+            responsive: true, maintainAspectRatio: true,
+            cutout: '55%',
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#1a1a1a', titleColor: '#e4e4e7', bodyColor: '#a1a1aa', borderColor: '#333', borderWidth: 1,
+                    callbacks: { label: ctx => `${ctx.label}: ${fmt(ctx.parsed, 1)} (${(ctx.parsed / total * 100).toFixed(1)}%)` }
+                }
+            }
+        }
+    });
+
+    // Legend
+    const legendEl = document.getElementById('dom-legend');
+    legendEl.innerHTML = labels.map((l, i) => {
+        const v = data[i];
+        return `<div style="display:flex;align-items:center;gap:8px"><div style="width:10px;height:10px;border-radius:2px;background:${colors[i]};flex-shrink:0"></div><span style="color:#a1a1aa;min-width:55px">${l}</span><span style="font-family:'JetBrains Mono';color:#e4e4e7;font-size:12px">${fmt(v,1)}</span><span style="font-family:'JetBrains Mono';color:#71717a;font-size:11px">${(v/total*100).toFixed(1)}%</span></div>`;
+    }).join('');
+}
+
+// Chain
+function renderChains() {
+    const totalChain = chainData.reduce((s, c) => s + (c.totalCirculatingUSD?.peggedUSD || 0), 0);
+    const top10 = chainData.slice(0, 10);
+    const otherSum = totalChain - top10.reduce((s, c) => s + (c.totalCirculatingUSD?.peggedUSD || 0), 0);
+    const labels = [...top10.map(c => c.name), '기타'];
+    const data = [...top10.map(c => c.totalCirculatingUSD?.peggedUSD || 0), otherSum];
+
+    const ctx = document.getElementById('chain-chart').getContext('2d');
+    chainChart = new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: filteredData.map(d => d.monthLabel),
-          datasets: datasets
+            labels,
+            datasets: [{
+                data,
+                backgroundColor: COLORS.slice(0, 11),
+                borderRadius: 4,
+                borderSkipped: false,
+                maxBarThickness: 50
+            }]
         },
         options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              mode: 'index',
-              intersect: false,
-              backgroundColor: '#1f2937',
-              titleColor: '#fff',
-              bodyColor: '#d1d5db',
-              borderColor: '#374151',
-              borderWidth: 1,
-              padding: 12,
-              callbacks: {
-                afterBody: function(context) {
-                  const total = context.reduce((sum, c) => sum + (c.raw || 0), 0);
-                  return `\n총 발행량: ${formatBillion(total)}`;
-                },
-                label: function(context) {
-                  return `${context.dataset.label}: ${formatBillion(context.raw)}`;
-                }
-              }
-            }
-          },
-          scales: {
-            x: {
-              stacked: true,
-              ticks: { color: '#6B7280', maxRotation: 45, minRotation: 45 },
-              grid: { display: false }
+            responsive: true, maintainAspectRatio: false,
+            indexAxis: 'y',
+            scales: {
+                x: { grid: { color: '#1a1a1a' }, ticks: { color: '#71717a', font: { family: 'JetBrains Mono', size: 10 }, callback: v => fmt(v, 0) } },
+                y: { grid: { display: false }, ticks: { color: '#a1a1aa', font: { family: 'Noto Sans KR', size: 11 } } }
             },
-            y: {
-              stacked: true,
-              ticks: {
-                color: '#6B7280',
-                callback: (value) => `$${(value / 1e9).toFixed(0)}B`
-              },
-              grid: { color: '#1f2937' }
-            }
-          }
-        }
-      });
-    }
-
-    function buildPieChart() {
-      const ctx = document.getElementById('pieChart').getContext('2d');
-      const allCoins = [...topStablecoins, '기타'];
-      const visibleData = pieData.filter(d => !hiddenCoins.has(d.name));
-
-      if (pieChart) pieChart.destroy();
-
-      pieChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels: visibleData.map(d => d.name),
-          datasets: [{
-            data: visibleData.map(d => d.value),
-            backgroundColor: visibleData.map(d => getColor(d.name, allCoins.indexOf(d.name))),
-            borderWidth: 2,
-            borderColor: '#000'
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          cutout: '55%',
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              backgroundColor: '#1f2937',
-              titleColor: '#fff',
-              bodyColor: '#d1d5db',
-              borderColor: '#374151',
-              borderWidth: 1,
-              padding: 12,
-              callbacks: {
-                label: function(context) {
-                  const total = pieData.reduce((sum, d) => sum + d.value, 0);
-                  const percentage = ((context.raw / total) * 100).toFixed(1);
-                  return [
-                    `${formatBillion(context.raw)}`,
-                    `시장 점유율: ${percentage}%`
-                  ];
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#1a1a1a', titleColor: '#e4e4e7', bodyColor: '#a1a1aa', borderColor: '#333', borderWidth: 1,
+                    callbacks: { label: ctx => fmt(ctx.parsed.x, 2) + ' (' + (ctx.parsed.x / totalChain * 100).toFixed(1) + '%)' }
                 }
-              }
             }
-          }
         }
-      });
-    }
+    });
 
-    function buildLegends() {
-      const allCoins = [...topStablecoins, '기타'];
-      
-      const createLegend = (containerId) => {
-        const container = document.getElementById(containerId);
-        const existingButtons = container.querySelectorAll('button');
-        existingButtons.forEach(btn => btn.remove());
+    // Grid
+    const grid = document.getElementById('chain-grid');
+    grid.innerHTML = top10.map(c => {
+        const v = c.totalCirculatingUSD?.peggedUSD || 0;
+        return `<div class="chain-item"><div class="chain-name">${c.name}</div><div class="chain-val">${fmt(v, 1)}</div><div class="chain-pct">${(v / totalChain * 100).toFixed(1)}%</div></div>`;
+    }).join('');
+}
 
-        allCoins.forEach((coin, index) => {
-          const btn = document.createElement('button');
-          btn.className = 'flex items-center gap-2 text-left w-full py-1 transition-opacity';
-          btn.style.opacity = hiddenCoins.has(coin) ? '0.4' : '1';
-          btn.innerHTML = `
-            <div class="w-4 h-4 rounded-sm flex-shrink-0" style="background-color: ${getColor(coin, index)}"></div>
-            <span class="text-gray-300 text-sm">${coin}</span>
-          `;
-          btn.onclick = () => toggleCoin(coin);
-          container.appendChild(btn);
+// History Chart
+async function loadMcapHistory(days = 365) {
+    try {
+        const key = 'all';
+        if (!historyCache[key]) {
+            const data = await fetchJSON('https://stablecoins.llama.fi/stablecoincharts/all?stablecoin=');
+            historyCache[key] = data;
+        }
+        const raw = historyCache[key] || [];
+        let filtered = raw;
+        if (days > 0) {
+            const cutoff = Date.now() / 1000 - days * 86400;
+            filtered = raw.filter(d => d.date >= cutoff);
+        }
+        const labels = filtered.map(d => new Date(d.date * 1000));
+        const values = filtered.map(d => d.totalCirculating?.peggedUSD || d.totalCirculatingUSD?.peggedUSD || 0);
+
+        if (mcapChart) mcapChart.destroy();
+        const ctx = document.getElementById('mcap-chart').getContext('2d');
+
+        const gradient = ctx.createLinearGradient(0, 0, 0, 340);
+        gradient.addColorStop(0, 'rgba(167,139,250,0.25)');
+        gradient.addColorStop(1, 'rgba(167,139,250,0)');
+
+        mcapChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{
+                    label: '전체 시가총액',
+                    data: values,
+                    borderColor: '#a78bfa',
+                    backgroundColor: gradient,
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 0,
+                    pointHitRadius: 10,
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                scales: {
+                    x: { type: 'time', time: { tooltipFormat: 'yyyy-MM-dd' }, grid: { color: '#1a1a1a' }, ticks: { color: '#71717a', maxTicksLimit: 8, font: { family: 'JetBrains Mono', size: 10 } } },
+                    y: { grid: { color: '#1a1a1a' }, ticks: { color: '#71717a', font: { family: 'JetBrains Mono', size: 10 }, callback: v => fmt(v, 0) } }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#1a1a1a', titleColor: '#e4e4e7', bodyColor: '#a1a1aa', borderColor: '#333', borderWidth: 1,
+                        callbacks: { label: ctx => fmt(ctx.parsed.y, 2) }
+                    }
+                }
+            }
         });
-      };
-
-      createLegend('barLegend');
-      createLegend('pieLegend');
+    } catch (e) {
+        console.error('History load error:', e);
     }
+}
 
-    function buildPieTable() {
-      const tbody = document.getElementById('pieTable');
-      const total = pieData.reduce((sum, d) => sum + d.value, 0);
-      
-      tbody.innerHTML = pieData.map((stable, i) => `
-        <tr class="border-b border-gray-800/50 ${hiddenCoins.has(stable.name) ? 'opacity-40' : ''}">
-          <td class="py-3 pl-4 text-gray-500">${i + 1}</td>
-          <td class="py-3">
-            <div class="flex items-center gap-2">
-              <div class="w-3 h-3 rounded-sm" style="background-color: ${getColor(stable.name, i)}"></div>
-              <span class="font-medium">${stable.name}</span>
-              <span class="text-gray-500 text-sm">${stable.fullName}</span>
-            </div>
-          </td>
-          <td class="py-3 text-right text-gray-300">${formatBillion(stable.value)}</td>
-          <td class="py-3 text-right pr-4 text-gray-400">${((stable.value / total) * 100).toFixed(1)}%</td>
-        </tr>
-      `).join('');
+// Period tabs
+document.getElementById('period-tabs').addEventListener('click', e => {
+    const btn = e.target.closest('.tab');
+    if (!btn) return;
+    document.querySelectorAll('#period-tabs .tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    loadMcapHistory(parseInt(btn.dataset.v));
+});
+
+// Individual coin tabs & chart
+function setupCoinTabs() {
+    const tabsEl = document.getElementById('coin-tabs');
+    const topCoins = allStablecoins.slice(0, 8);
+    tabsEl.innerHTML = topCoins.map((c, i) =>
+        `<button class="tab ${i === 0 ? 'active' : ''}" data-id="${c.id}" data-symbol="${c.symbol}">${c.symbol}</button>`
+    ).join('');
+
+    tabsEl.addEventListener('click', async e => {
+        const btn = e.target.closest('.tab');
+        if (!btn) return;
+        tabsEl.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        await loadIndividualChart(btn.dataset.id, btn.dataset.symbol);
+    });
+
+    if (topCoins.length > 0) {
+        loadIndividualChart(topCoins[0].id, topCoins[0].symbol);
     }
+}
 
-    function toggleCoin(coin) {
-      if (hiddenCoins.has(coin)) {
-        hiddenCoins.delete(coin);
-      } else {
-        hiddenCoins.add(coin);
-      }
-      buildBarChart();
-      buildPieChart();
-      buildLegends();
-      buildPieTable();
-    }
-
-    function setTimeRange(range) {
-      currentTimeRange = range;
-      document.querySelectorAll('.time-btn').forEach(btn => {
-        if (btn.dataset.range === range) {
-          btn.className = 'time-btn px-4 py-2 rounded-lg font-medium transition bg-white text-black';
-        } else {
-          btn.className = 'time-btn px-4 py-2 rounded-lg font-medium transition bg-gray-900 text-gray-400 hover:text-white';
+async function loadIndividualChart(id, symbol) {
+    try {
+        const cacheKey = `coin_${id}`;
+        if (!historyCache[cacheKey]) {
+            const data = await fetchJSON(`https://stablecoins.llama.fi/stablecoin/${id}`);
+            historyCache[cacheKey] = data;
         }
-      });
-      buildBarChart();
+        const coinData = historyCache[cacheKey];
+        const tokens = coinData.tokens || [];
+
+        // Aggregate all chains
+        const dateMap = {};
+        tokens.forEach(entry => {
+            const date = entry.date;
+            if (!dateMap[date]) dateMap[date] = 0;
+            const circ = entry.circulating?.peggedUSD || 0;
+            dateMap[date] += circ;
+        });
+
+        const sorted = Object.entries(dateMap).sort((a, b) => a[0] - b[0]);
+        // Last 365 days
+        const cutoff = Date.now() / 1000 - 365 * 86400;
+        const filtered = sorted.filter(([d]) => parseInt(d) >= cutoff);
+
+        const labels = filtered.map(([d]) => new Date(parseInt(d) * 1000));
+        const values = filtered.map(([, v]) => v);
+
+        const colorIdx = allStablecoins.findIndex(c => c.id == id);
+        const color = COLORS[colorIdx >= 0 ? colorIdx % COLORS.length : 0];
+
+        if (individualChart) individualChart.destroy();
+        const ctx = document.getElementById('individual-chart').getContext('2d');
+
+        const gradient = ctx.createLinearGradient(0, 0, 0, 340);
+        gradient.addColorStop(0, color + '40');
+        gradient.addColorStop(1, color + '00');
+
+        individualChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{
+                    label: symbol + ' 시가총액',
+                    data: values,
+                    borderColor: color,
+                    backgroundColor: gradient,
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 0,
+                    pointHitRadius: 10,
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                scales: {
+                    x: { type: 'time', time: { tooltipFormat: 'yyyy-MM-dd' }, grid: { color: '#1a1a1a' }, ticks: { color: '#71717a', maxTicksLimit: 8, font: { family: 'JetBrains Mono', size: 10 } } },
+                    y: { grid: { color: '#1a1a1a' }, ticks: { color: '#71717a', font: { family: 'JetBrains Mono', size: 10 }, callback: v => fmt(v, 0) } }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#1a1a1a', titleColor: '#e4e4e7', bodyColor: '#a1a1aa', borderColor: '#333', borderWidth: 1,
+                        callbacks: { label: ctx => symbol + ': ' + fmt(ctx.parsed.y, 2) }
+                    }
+                }
+            }
+        });
+    } catch (e) {
+        console.error('Individual chart error:', e);
     }
+}
 
-    function switchTab(tab) {
-      currentTab = tab;
-      const barBtn = document.getElementById('barTabBtn');
-      const pieBtn = document.getElementById('pieTabBtn');
-      const barContainer = document.getElementById('barChartContainer');
-      const pieContainer = document.getElementById('pieChartContainer');
-      const timeRangeButtons = document.getElementById('timeRangeButtons');
-
-      if (tab === 'bar') {
-        barBtn.className = 'px-4 py-2 rounded-md font-medium transition bg-white text-black';
-        pieBtn.className = 'px-4 py-2 rounded-md font-medium transition text-gray-400 hover:text-white';
-        barContainer.classList.remove('hidden');
-        pieContainer.classList.add('hidden');
-        timeRangeButtons.classList.remove('hidden');
-      } else {
-        pieBtn.className = 'px-4 py-2 rounded-md font-medium transition bg-white text-black';
-        barBtn.className = 'px-4 py-2 rounded-md font-medium transition text-gray-400 hover:text-white';
-        pieContainer.classList.remove('hidden');
-        barContainer.classList.add('hidden');
-        timeRangeButtons.classList.add('hidden');
-      }
-    }
-
-    // Start the app
-    init();
-  </script>
+// Start
+init();
+</script>
 </body>
 </html>
