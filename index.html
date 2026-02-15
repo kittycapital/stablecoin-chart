@@ -6,7 +6,7 @@
 <meta name="description" content="스테이블코인 대시보드 - 실시간 시가총액, 점유율, 체인별 분포 | Herdvibe">
 <title>스테이블코인 대시보드 | Herdvibe</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js"></script>
@@ -17,20 +17,21 @@ html::-webkit-scrollbar{display:none}
 body{background:#000;color:#e4e4e7;font-family:'Noto Sans KR',sans-serif;min-height:100vh}
 
 /* Nav */
-.top-nav{position:sticky;top:0;z-index:100;background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);border-bottom:1px solid #1a1a1a;padding:0 16px;display:flex;align-items:center;justify-content:center;gap:24px;height:52px}
-.nav-logo{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;color:#a78bfa;white-space:nowrap;letter-spacing:-0.5px}
-.nav-title{font-size:14px;font-weight:600;color:#e4e4e7;white-space:nowrap}
+.top-nav{position:sticky;top:0;z-index:100;background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);border-bottom:1px solid #1a1a1a;padding:0 16px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;height:56px}
+.nav-left{min-width:0}
+.nav-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.3rem;font-weight:600;color:#e4e4e7;white-space:nowrap;text-align:center}
+.nav-right{display:flex;justify-content:flex-end}
 
 /* Container */
 .container{max-width:960px;margin:0 auto;padding:16px 12px 60px}
 
 /* Cards */
 .card{background:#0a0a0a;border:1px solid #1a1a1a;border-radius:12px;padding:16px;margin-bottom:16px}
-.card-title{font-size:14px;font-weight:600;color:#a1a1aa;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.card-title{font-size:14px;font-weight:600;color:#a1a1aa;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:6px;text-align:center}
 
 /* Summary Cards */
 .summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:16px}
-.summary-card{background:#0a0a0a;border:1px solid #1a1a1a;border-radius:10px;padding:14px 16px}
+.summary-card{background:#0a0a0a;border:1px solid #1a1a1a;border-radius:10px;padding:14px 16px;text-align:center}
 .summary-label{font-size:11px;color:#71717a;font-weight:500;margin-bottom:4px}
 .summary-value{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:#f4f4f5}
 .summary-sub{font-family:'JetBrains Mono',monospace;font-size:12px;margin-top:2px}
@@ -39,7 +40,7 @@ body{background:#000;color:#e4e4e7;font-family:'Noto Sans KR',sans-serif;min-hei
 
 /* Chart */
 .chart-box{position:relative;width:100%;margin:8px 0}
-.chart-wrapper{position:relative;height:380px}
+.chart-wrapper{position:relative;height:420px}
 .chart-wrapper canvas{width:100%!important;height:100%!important}
 
 /* Watermark */
@@ -65,7 +66,7 @@ body{background:#000;color:#e4e4e7;font-family:'Noto Sans KR',sans-serif;min-hei
 .dom-fill{height:100%;border-radius:3px;transition:width 0.6s ease}
 
 /* Tabs */
-.tabs{display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap}
+.tabs{display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap;justify-content:center}
 .tab{background:#111;border:1px solid #1a1a1a;border-radius:6px;padding:6px 12px;font-size:12px;color:#a1a1aa;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all 0.2s}
 .tab:hover{border-color:#333;color:#e4e4e7}
 .tab.active{background:#a78bfa;border-color:#a78bfa;color:#000;font-weight:600}
@@ -88,7 +89,7 @@ body{background:#000;color:#e4e4e7;font-family:'Noto Sans KR',sans-serif;min-hei
 
 /* Chain dist */
 .chain-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
-.chain-item{background:#111;border:1px solid #1a1a1a;border-radius:8px;padding:10px 12px}
+.chain-item{background:#111;border:1px solid #1a1a1a;border-radius:8px;padding:10px 12px;text-align:center}
 .chain-name{font-size:12px;color:#a1a1aa;font-weight:500;margin-bottom:4px}
 .chain-val{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:#e4e4e7}
 .chain-pct{font-family:'JetBrains Mono',monospace;font-size:11px;color:#71717a}
@@ -109,22 +110,25 @@ body{background:#000;color:#e4e4e7;font-family:'Noto Sans KR',sans-serif;min-hei
 .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 
 /* Responsive */
-@media(max-width:640px){
-  .top-nav{gap:12px;padding:0 10px}
-  .nav-logo{font-size:13px}
-  .nav-title{font-size:12px}
+@media(max-width:768px){
+  .top-nav{padding:0 10px;height:52px}
+  .nav-title{font-size:1.1rem}
   .summary-value{font-size:16px}
-  .chart-wrapper{height:260px}
+  .chart-wrapper{height:340px}
   .watermark::after{font-size:20px}
   .coin-table td,.coin-table th{padding:8px 6px;font-size:12px}
   .chain-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}
 }
+@media(max-width:520px){.chart-wrapper{height:300px}}
+@media(max-width:380px){.nav-title{font-size:1rem}}
 </style>
 </head>
 <body>
 
 <nav class="top-nav">
+    <div class="nav-left"></div>
     <div class="nav-title">스테이블코인 대시보드</div>
+    <div class="nav-right"></div>
 </nav>
 
 <div class="container">
@@ -138,7 +142,7 @@ body{background:#000;color:#e4e4e7;font-family:'Noto Sans KR',sans-serif;min-hei
 
     <!-- Market Cap History Chart -->
     <div class="card">
-        <div class="card-title">📊 스테이블코인 시가총액 추이</div>
+        <div class="card-title">스테이블코인 시가총액 추이</div>
         <div class="tabs" id="period-tabs">
             <button class="tab active" data-v="365">1년</button>
             <button class="tab" data-v="180">6개월</button>
@@ -159,7 +163,7 @@ body{background:#000;color:#e4e4e7;font-family:'Noto Sans KR',sans-serif;min-hei
 
     <!-- Dominance Chart -->
     <div class="card">
-        <div class="card-title">🥧 스테이블코인 점유율</div>
+        <div class="card-title">스테이블코인 점유율</div>
         <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;justify-content:center">
             <div style="width:260px;height:260px;position:relative"><canvas id="dom-chart"></canvas></div>
             <div id="dom-legend" style="font-size:13px;display:flex;flex-direction:column;gap:6px"></div>
@@ -175,7 +179,7 @@ body{background:#000;color:#e4e4e7;font-family:'Noto Sans KR',sans-serif;min-hei
 
     <!-- Top Stablecoins Table -->
     <div class="card">
-        <div class="card-title">🏆 상위 스테이블코인</div>
+        <div class="card-title">상위 스테이블코인</div>
         <div class="table-wrap">
             <table class="coin-table">
                 <thead><tr><th>#</th><th>이름</th><th>시가총액</th><th>7일 변동</th><th>점유율</th><th>페그</th></tr></thead>
@@ -186,16 +190,16 @@ body{background:#000;color:#e4e4e7;font-family:'Noto Sans KR',sans-serif;min-hei
 
     <!-- Chain Distribution -->
     <div class="card">
-        <div class="card-title">⛓️ 체인별 스테이블코인 분포</div>
+        <div class="card-title">체인별 스테이블코인 분포</div>
         <div class="chart-box">
-            <div class="chart-wrapper watermark" style="height:300px"><canvas id="chain-chart"></canvas></div>
+            <div class="chart-wrapper watermark" style="height:340px"><canvas id="chain-chart"></canvas></div>
         </div>
         <div class="chain-grid" id="chain-grid"></div>
     </div>
 
     <!-- Individual Stablecoin Charts -->
     <div class="card">
-        <div class="card-title">📈 개별 스테이블코인 시가총액 추이</div>
+        <div class="card-title">개별 스테이블코인 시가총액 추이</div>
         <div class="tabs" id="coin-tabs"></div>
         <div class="chart-box">
             <div class="chart-wrapper watermark"><canvas id="individual-chart"></canvas></div>
@@ -229,7 +233,6 @@ let chainData = [];
 let historyCache = {};
 let mcapChart, domChart, chainChart, individualChart;
 
-// Format
 function fmt(n, d=1) {
     if (n >= 1e12) return '$' + (n/1e12).toFixed(d) + 'T';
     if (n >= 1e9) return '$' + (n/1e9).toFixed(d) + 'B';
@@ -238,7 +241,6 @@ function fmt(n, d=1) {
 }
 function pct(n) { return (n >= 0 ? '+' : '') + n.toFixed(2) + '%'; }
 
-// Toast
 function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg;
@@ -246,7 +248,6 @@ function showToast(msg) {
     setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-// Share
 function shareTwitter() {
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(SHARE_TITLE)}&url=${encodeURIComponent(SHARE_URL)}`, '_blank');
 }
@@ -272,7 +273,7 @@ function copyLink() {
         }
         btn.classList.add('copied');
         btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>복사됨!';
-        showToast('링크가 복사되었습니다 ✓');
+        showToast('링크가 복사되었습니다');
         setTimeout(() => {
             btn.classList.remove('copied');
             btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>링크복사';
@@ -289,7 +290,7 @@ function shareInstagram(btn) {
         const origHTML = btn.innerHTML;
         btn.classList.add('copied');
         btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>복사됨!';
-        showToast('링크가 복사되었습니다 - 인스타그램에 붙여넣기 하세요 ✓');
+        showToast('링크가 복사되었습니다 - 인스타그램에 붙여넣기 하세요');
         setTimeout(() => {
             btn.classList.remove('copied');
             btn.innerHTML = origHTML;
@@ -306,7 +307,7 @@ function copyLink2(btn) {
         const origHTML = btn.innerHTML;
         btn.classList.add('copied');
         btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>복사됨!';
-        showToast('링크가 복사되었습니다 ✓');
+        showToast('링크가 복사되었습니다');
         setTimeout(() => {
             btn.classList.remove('copied');
             btn.innerHTML = origHTML;
@@ -314,14 +315,12 @@ function copyLink2(btn) {
     } catch(e) { showToast('복사 실패'); }
 }
 
-// Fetch
 async function fetchJSON(url) {
     const r = await fetch(url);
     if (!r.ok) throw new Error(r.status);
     return r.json();
 }
 
-// Init
 async function init() {
     try {
         const [stables, chains] = await Promise.all([
@@ -353,7 +352,6 @@ async function init() {
     }
 }
 
-// Summary
 function renderSummary() {
     const total = allStablecoins.reduce((s, c) => s + (c.circulating?.peggedUSD || 0), 0);
     const usdt = allStablecoins.find(c => c.symbol === 'USDT');
@@ -392,7 +390,6 @@ function calcChange7d(coins) {
     return prev > 0 ? ((now - prev) / prev) * 100 : 0;
 }
 
-// Table
 function renderTable() {
     const total = allStablecoins.reduce((s, c) => s + (c.circulating?.peggedUSD || 0), 0);
     const top = allStablecoins.slice(0, 15);
@@ -419,7 +416,6 @@ function renderTable() {
     }).join('');
 }
 
-// Dominance Pie
 function renderDominance() {
     const total = allStablecoins.reduce((s, c) => s + (c.circulating?.peggedUSD || 0), 0);
     const topN = allStablecoins.slice(0, 8);
@@ -445,7 +441,6 @@ function renderDominance() {
         }
     });
 
-    // Legend
     const legendEl = document.getElementById('dom-legend');
     legendEl.innerHTML = labels.map((l, i) => {
         const v = data[i];
@@ -453,7 +448,6 @@ function renderDominance() {
     }).join('');
 }
 
-// Chain
 function renderChains() {
     const totalChain = chainData.reduce((s, c) => s + (c.totalCirculatingUSD?.peggedUSD || 0), 0);
     const top10 = chainData.slice(0, 10);
@@ -491,7 +485,6 @@ function renderChains() {
         }
     });
 
-    // Grid
     const grid = document.getElementById('chain-grid');
     grid.innerHTML = top10.map(c => {
         const v = c.totalCirculatingUSD?.peggedUSD || 0;
@@ -499,7 +492,6 @@ function renderChains() {
     }).join('');
 }
 
-// History Chart - Stacked Bar by stablecoin
 const STACKED_COLORS = {
     'USDT': '#26a17b',
     'USDC': '#2775ca',
@@ -520,7 +512,6 @@ const TOP_STABLE_IDS = [
 
 async function loadMcapHistory(days = 365) {
     try {
-        // Fetch total + individual top stablecoins
         const cacheKey = 'stacked_all';
         if (!historyCache[cacheKey]) {
             const fetches = [
@@ -533,7 +524,6 @@ async function loadMcapHistory(days = 365) {
 
         const { total, coins } = historyCache[cacheKey];
 
-        // Build date map
         const dateMap = {};
         total.forEach(d => {
             const val = d.totalCirculating?.peggedUSD || d.totalCirculatingUSD?.peggedUSD || 0;
@@ -553,7 +543,6 @@ async function loadMcapHistory(days = 365) {
             entries = entries.filter(([d]) => parseInt(d) >= cutoff);
         }
 
-        // Sample to ~80 bars max for readability
         const maxBars = 80;
         let sampled = entries;
         if (entries.length > maxBars) {
@@ -563,7 +552,6 @@ async function loadMcapHistory(days = 365) {
 
         const labels = sampled.map(([d]) => new Date(parseInt(d) * 1000));
 
-        // Build datasets
         const datasets = TOP_STABLE_IDS.map(s => ({
             label: s.symbol,
             data: sampled.map(([, v]) => v[s.symbol] || 0),
@@ -572,7 +560,6 @@ async function loadMcapHistory(days = 365) {
             borderSkipped: false
         }));
 
-        // Others = total - sum of top coins
         datasets.push({
             label: '기타',
             data: sampled.map(([, v]) => {
@@ -625,7 +612,6 @@ async function loadMcapHistory(days = 365) {
     }
 }
 
-// Period tabs
 document.getElementById('period-tabs').addEventListener('click', e => {
     const btn = e.target.closest('.tab');
     if (!btn) return;
@@ -634,7 +620,6 @@ document.getElementById('period-tabs').addEventListener('click', e => {
     loadMcapHistory(parseInt(btn.dataset.v));
 });
 
-// Individual coin tabs & chart
 function setupCoinTabs() {
     const tabsEl = document.getElementById('coin-tabs');
     const topCoins = allStablecoins.slice(0, 8);
@@ -665,7 +650,6 @@ async function loadIndividualChart(id, symbol) {
         const coinData = historyCache[cacheKey];
         const tokens = coinData.tokens || [];
 
-        // Aggregate all chains
         const dateMap = {};
         tokens.forEach(entry => {
             const date = entry.date;
@@ -675,7 +659,6 @@ async function loadIndividualChart(id, symbol) {
         });
 
         const sorted = Object.entries(dateMap).sort((a, b) => a[0] - b[0]);
-        // Last 365 days
         const cutoff = Date.now() / 1000 - 365 * 86400;
         const filtered = sorted.filter(([d]) => parseInt(d) >= cutoff);
 
@@ -729,7 +712,6 @@ async function loadIndividualChart(id, symbol) {
     }
 }
 
-// Start
 init();
 </script>
 </body>
