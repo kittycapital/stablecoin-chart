@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-02-20 02:32 UTC",
+  "lastUpdated": "2026-02-21 01:12 UTC",
   "topStablecoins": [
     "USDT",
     "USDC",
@@ -15,57 +15,57 @@
   "pieData": [
     {
       "name": "USDT",
-      "value": 183638221162.27142,
+      "value": 182532586589.95633,
       "fullName": "Tether"
     },
     {
       "name": "USDC",
-      "value": 73790471735.69556,
+      "value": 74494914951.91794,
       "fullName": "USD Coin"
     },
     {
       "name": "USDS",
-      "value": 7150374930.160721,
+      "value": 6858497610.09959,
       "fullName": "Sky Dollar"
     },
     {
       "name": "USDe",
-      "value": 6230345878.507205,
+      "value": 6228426857.764162,
       "fullName": "Ethena USDe"
     },
     {
       "name": "USD1",
-      "value": 5109127163.609863,
+      "value": 5042352913.928788,
       "fullName": "World Liberty Financial USD"
     },
     {
       "name": "DAI",
-      "value": 4430822100.316528,
+      "value": 4421244346.034915,
       "fullName": "Dai"
     },
     {
       "name": "PYUSD",
-      "value": 4009403279.3397694,
+      "value": 4046412939.8686275,
       "fullName": "PayPal USD"
     },
     {
       "name": "BUIDL",
-      "value": 2462411535.280449,
+      "value": 2462345282.670449,
       "fullName": "BlackRock USD"
     },
     {
       "name": "USYC",
-      "value": 1687412704.1715178,
+      "value": 1687577077.8542078,
       "fullName": "Circle USYC"
     },
     {
       "name": "USDf",
-      "value": 1637558083.4376838,
+      "value": 1636587808.4124718,
       "fullName": "Falcon USD"
     },
     {
       "name": "기타",
-      "value": 17036009254.686193,
+      "value": 17030767153.476067,
       "fullName": "기타 스테이블코인"
     }
   ],
@@ -1079,17 +1079,17 @@
     {
       "date": 1771545600,
       "total": 307909310468.12,
-      "USDT": 183708077228.53702,
+      "USDT": 183708077229,
       "USDC": 73794951760.18715,
-      "USDS": 6853167162.199882,
-      "USDe": 6235346417.660427,
-      "USD1": 5113906777.186449,
-      "DAI": 4429542321.680494,
-      "PYUSD": 4010920864.113459,
-      "BUIDL": 2462411535.280449,
-      "USYC": 1510842491.210554,
-      "USDf": 1642167524.9235477,
-      "기타": 18147976385.140564,
+      "USDS": 6853167162,
+      "USDe": 6235346418,
+      "USD1": 5113906777,
+      "DAI": 4429542322,
+      "PYUSD": 4010920864,
+      "BUIDL": 2462411535,
+      "USYC": 1510842491,
+      "USDf": 1642167525,
+      "기타": 18147976384.93286,
       "monthLabel": "Feb 2026"
     }
   ]
