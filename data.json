@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-03-26 02:45 UTC",
+  "lastUpdated": "2026-03-27 02:47 UTC",
   "topStablecoins": [
     "USDT",
     "USDC",
@@ -15,57 +15,57 @@
   "pieData": [
     {
       "name": "USDT",
-      "value": 184123125124.97125,
+      "value": 184069753850.7428,
       "fullName": "Tether"
     },
     {
       "name": "USDC",
-      "value": 78685508546.4665,
+      "value": 78096581571.55669,
       "fullName": "USD Coin"
     },
     {
       "name": "USDS",
-      "value": 8652351144.922268,
+      "value": 8503417909.499902,
       "fullName": "Sky Dollar"
     },
     {
       "name": "USDe",
-      "value": 5916059840.84713,
+      "value": 5921199889.70297,
       "fullName": "Ethena USDe"
     },
     {
       "name": "DAI",
-      "value": 4566211698.094373,
+      "value": 4552471402.720929,
       "fullName": "Dai"
     },
     {
       "name": "USD1",
-      "value": 4423673665.003184,
+      "value": 4418459807.301299,
       "fullName": "World Liberty Financial USD"
     },
     {
       "name": "PYUSD",
-      "value": 3947466101.417588,
+      "value": 3883757421.897404,
       "fullName": "PayPal USD"
     },
     {
       "name": "BUIDL",
-      "value": 2642603227.740449,
+      "value": 2663582297.490449,
       "fullName": "BlackRock USD"
     },
     {
       "name": "USYC",
-      "value": 2433146295.374324,
+      "value": 2608382535.4858046,
       "fullName": "Circle USYC"
     },
     {
       "name": "USDG",
-      "value": 1679216052.963896,
+      "value": 1691426914.5194204,
       "fullName": "Global Dollar"
     },
     {
       "name": "기타",
-      "value": 17493333116.6747,
+      "value": 17659654544.994106,
       "fullName": "기타 스테이블코인"
     }
   ],
