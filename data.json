@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-08-07 02:50 UTC",
+  "lastUpdated": "2026-08-08 01:53 UTC",
   "topStablecoins": [
     "USDT",
     "USDC",
@@ -15,57 +15,57 @@
   "pieData": [
     {
       "name": "USDT",
-      "value": 183526612381.4165,
+      "value": 183187047203.07004,
       "fullName": "Tether"
     },
     {
       "name": "USDC",
-      "value": 71920523329.79811,
+      "value": 72271902594.07542,
       "fullName": "USD Coin"
     },
     {
       "name": "USDS",
-      "value": 6684976142.273406,
+      "value": 6399110207.193016,
       "fullName": "Sky Dollar"
     },
     {
       "name": "DAI",
-      "value": 4793741309.904589,
+      "value": 4803343986.828865,
       "fullName": "Dai"
     },
     {
       "name": "USD1",
-      "value": 4005250237.14606,
+      "value": 4023846525.868,
       "fullName": "World Liberty Financial USD"
     },
     {
       "name": "USDe",
-      "value": 3884900956.0484734,
+      "value": 3899434966.077366,
       "fullName": "Ethena USDe"
     },
     {
       "name": "USDG",
-      "value": 3400884428.6868834,
+      "value": 3419153412.633372,
       "fullName": "Global Dollar"
     },
     {
       "name": "USYC",
-      "value": 3004222509.182928,
+      "value": 3004513138.0821843,
       "fullName": "Circle USYC"
     },
     {
       "name": "PYUSD",
-      "value": 2737837079.0013514,
+      "value": 2767417962.183112,
       "fullName": "PayPal USD"
     },
     {
       "name": "BUIDL",
-      "value": 2708641520.130449,
+      "value": 2708202194.770448,
       "fullName": "BlackRock USD"
     },
     {
       "name": "기타",
-      "value": 21234480335.258183,
+      "value": 20516793750.706573,
       "fullName": "기타 스테이블코인"
     }
   ],
@@ -1170,7 +1170,8 @@
     },
     {
       "date": 1786060800,
-      "total": 305951432641.78,
+      "total": 305903385336.88,
+      "USDT": 183475699331.06335,
       "USDC": 71948942692.35124,
       "USDS": 6685617611.689561,
       "DAI": 4793756237.902474,
@@ -1180,7 +1181,7 @@
       "USYC": 2650946212.22657,
       "PYUSD": 2738901129.8992004,
       "BUIDL": 2708641520.1304493,
-      "기타": 203129466020.60803,
+      "기타": 19605719384.644714,
       "monthLabel": "Aug 2026"
     }
   ]
